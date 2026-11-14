@@ -57,6 +57,18 @@ def make_qa2_update(output, fail_files=False):
         for name,data in changes.items():z.writestr('payload/'+name,data)
 
 
+def harden_qa2_fixture(app):
+    """Apply review-only hardening to an unpacked disposable QA2 fixture.
+
+    Official dev24 and QA2 archives remain byte-for-byte untouched.
+    """
+    patch=ROOT/'qa/patches/QA3_SNAPSHOT_FAIL_CLOSED_REVIEW_ONLY.patch'
+    proc=subprocess.run(['patch','-p1','--batch','-i',str(patch)],cwd=app,capture_output=True,text=True)
+    check('QA3 review patch applies to exact QA2 source',proc.returncode==0,proc.stderr[-200:])
+    lint=subprocess.run(['php','-l',str(app/'app/UpdateManagerV2.php')],capture_output=True,text=True)
+    check('QA3 review patch PHP syntax',lint.returncode==0,lint.stderr[-200:])
+
+
 def old_snapshot_gap(kit,work):
     """Deterministic negative control: inject a test-only writer AFTER export
        and BEFORE legacy maintenance marker, reproduce data loss on rollback.
@@ -89,6 +101,7 @@ def old_snapshot_gap(kit,work):
 def qa2_gate_positive(kit,work):
     db='sokna_qa_snapshot_guard';app=work/'qa2-guard'
     unpack(kit/'SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip',app)
+    harden_qa2_fixture(app)
     mysql(f'CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci')
     install(app,db,8802)
     pkg=work/'qa2-gate-failure.zip';make_qa2_update(pkg,fail_files=True)
@@ -140,6 +153,7 @@ def qa2_gate_positive(kit,work):
 def qa2_tamper(kit,work):
     db='sokna_qa_tamper';app=work/'qa2-tamper'
     unpack(kit/'SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip',app)
+    harden_qa2_fixture(app)
     mysql(f'CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');install(app,db,8803)
     pkg=work/'qa2-tamper.zip';make_qa2_update(pkg)
     op=begin(app,pkg,gate=True)
@@ -155,6 +169,7 @@ def qa2_tamper(kit,work):
 def qa2_post_success(kit,work):
     db='sokna_qa_no_rewind';app=work/'qa2-no-rewind'
     unpack(kit/'SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip',app)
+    harden_qa2_fixture(app)
     mysql(f'CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');install(app,db,8804)
     pkg=work/'qa2-success.zip';make_qa2_update(pkg)
     op=begin(app,pkg,gate=True)
@@ -164,6 +179,27 @@ def qa2_post_success(kit,work):
     check('unsafe rollback after successful update denied',result=='BLOCKED')
     check('post-success write retained',db_setting(db,'qa_after_success')=='DURABLE')
     check('successful update not reversed',(app/'VERSION').read_text().strip()=='2.6.19-dev.25-qa3-ci')
+
+
+def qa2_unsealed_journal(kit,work):
+    db='sokna_qa_no_proof';app=work/'qa2-no-proof'
+    unpack(kit/'SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip',app)
+    harden_qa2_fixture(app)
+    mysql(f'CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');install(app,db,8805)
+    pkg=work/'qa2-no-proof.zip';make_qa2_update(pkg)
+    op=begin(app,pkg,gate=True)
+    journal_path=app/'storage/updates'/op/'journal.json'
+    journal=json.loads(journal_path.read_text())
+    check('new journal includes isolated snapshot proof',journal.get('snapshot_isolated') is True)
+    journal.pop('snapshot_isolated');journal.pop('database_sha256')
+    journal_path.write_text(json.dumps(journal))
+    result=phpcall(app,'try{UpdateManagerV2::continue($argv[1],1);echo "ALLOWED";}catch(Throwable $e){echo "BLOCKED";}',op)
+    check('unsealed legacy-style journal cannot continue',result=='BLOCKED',result)
+    result=phpcall(app,'try{UpdateManagerV2::requestRollback($argv[1],1);echo "ALLOWED";}catch(Throwable $e){echo "BLOCKED";}',op)
+    check('unsealed legacy-style journal cannot restore',result=='BLOCKED',result)
+    check('unsealed journal holds maintenance lock',(app/'storage/maintenance.lock').exists())
+    check('unsealed journal leaves VERSION intact',(app/'VERSION').read_text().strip()=='2.6.19-dev.25-qa2')
+    check('unsealed journal has not erased settings',db_setting(db,'property_name')!='')
 
 
 def main():
@@ -180,6 +216,7 @@ def main():
         qa2_gate_positive(kit,work)
         qa2_tamper(kit,work)
         qa2_post_success(kit,work)
+        qa2_unsealed_journal(kit,work)
         check('dev24 initial upgrade still BLOCKED',True,'legacy updater must be retired via a separately qualified safe entry path')
 
 if __name__=='__main__':
