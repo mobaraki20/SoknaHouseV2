@@ -46,11 +46,15 @@ jobs:
           php -m | grep -E '^(PDO|pdo_mysql|mbstring|zip|json)$'
       - name: Run pinned QA2 real database validation
         run: python3 qa/ci/staging_runner.py
+      - name: Test real dev24 UpdateManagerV2 on disposable DB with injected faults
+        run: python3 qa/ci/update_staging_runner.py
       - name: Preserve staging result without DB credentials or data
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: soknahouse-qa2-mariadb-results
-          path: staging-ci-report.json
+          path: |
+            staging-ci-report.json
+            staging-update-ci-report.json
           if-no-files-found: warn
           retention-days: 14
