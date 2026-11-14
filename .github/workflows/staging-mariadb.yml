@@ -48,6 +48,8 @@ jobs:
         run: python3 qa/ci/staging_runner.py
       - name: Test real dev24 UpdateManagerV2 on disposable DB with injected faults
         run: python3 qa/ci/update_staging_runner.py
+      - name: Reproduce legacy snapshot gap and verify QA2 isolation/recovery on disposable MariaDB
+        run: python3 qa/ci/update_safety_runner.py
       - name: Preserve staging result without DB credentials or data
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,5 +58,6 @@ jobs:
           path: |
             staging-ci-report.json
             staging-update-ci-report.json
+            staging-update-safety-report.json
           if-no-files-found: warn
           retention-days: 14
