@@ -1,0 +1,54 @@
+name: Publish verified QA2 source for review
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-qa2-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-qa-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and extract only source files
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, zipfile
+          from pathlib import Path
+          parts=sorted(Path('qa/artifacts').glob('qa2-kit.zip.part*'))
+          assert len(parts)==4
+          data=b''.join(p.read_bytes() for p in parts)
+          assert hashlib.sha256(data).hexdigest()=='def74d7227d23f739eb44e16156b762612b14ac16e3615e87bcfbf0fe4bc7acd'
+          with zipfile.ZipFile(io.BytesIO(data)) as kit:
+              app=kit.read('SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip')
+          assert hashlib.sha256(app).hexdigest()=='0584900b539482b8f7dfbd1b13744bb5bf53f41bbe530631d847deba3c70ced9'
+          dest=Path('source/qa2')
+          dest.mkdir(parents=True, exist_ok=True)
+          with zipfile.ZipFile(io.BytesIO(app)) as z:
+              paths=z.namelist()
+              assert 'config/config.php' not in paths
+              assert not any('/.env' in f or f.endswith('.pem') or f.endswith('.key') for f in paths)
+              for file in paths:
+                  p=Path(file)
+                  assert not file.startswith('/') and not '..' in p.parts and not '\\' in file
+              z.extractall(dest)
+          print('QA2 verified source files:',len(paths))
+          PY
+      - name: Commit source files to isolated review branch
+        run: |
+          if git ls-remote --exit-code --heads origin 'qa/dev25-qa2-source' >/dev/null 2>&1; then
+            echo 'Review branch already exists; refusing to replace it.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c qa/dev25-qa2-source
+          git add source/qa2
+          git commit -m 'Publish exact verified dev25-qa2 staging source for review'
+          git push origin HEAD:refs/heads/qa/dev25-qa2-source
