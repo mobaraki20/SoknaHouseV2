@@ -1,0 +1,56 @@
+name: SoknaHouse QA2 / MariaDB Staging
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/staging-mariadb.yml'
+      - 'qa/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: soknahouse-staging-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  staging-mariadb:
+    name: Disposable DB, install, migration, concurrency
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: qa-only-root-password-2026
+          MARIADB_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=15
+    env:
+      SOKNA_QA_CI_ROOT_PASSWORD: qa-only-root-password-2026
+    steps:
+      - name: Fetch staging test files
+        uses: actions/checkout@v4
+      - name: Install PHP and MariaDB client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq php8.3-cli php8.3-mysql php8.3-mbstring php8.3-zip mariadb-client python3
+          php --version
+          php -m | grep -E '^(PDO|pdo_mysql|mbstring|zip|json)$'
+      - name: Run pinned QA2 real database validation
+        run: python3 qa/ci/staging_runner.py
+      - name: Preserve staging result without DB credentials or data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soknahouse-qa2-mariadb-results
+          path: staging-ci-report.json
+          if-no-files-found: warn
+          retention-days: 14
