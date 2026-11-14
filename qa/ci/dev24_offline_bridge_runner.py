@@ -7,7 +7,7 @@ file guard first, keeping VERSION and schema unchanged. Real production needs
 independent verified ingress isolation + in-flight request drain: the marker
 used here is NOT a production proof of quiescence.
 """
-import contextlib, hashlib, http.cookiejar, json, os, re, shutil, socket, subprocess, sys, tempfile, time, urllib.error, urllib.request, zipfile
+import contextlib, hashlib, http.cookiejar, json, os, re, shutil, socket, subprocess, sys, tempfile, time, urllib.error, urllib.parse, urllib.request, zipfile
 from pathlib import Path
 from staging_runner import ARCHIVE_PARTS, EXPECTED_KIT_SHA256, EXPECTED_CLEAN_SHA256, mysql, install, unpack
 from update_staging_runner import php, loop
@@ -188,6 +188,45 @@ def http_locked(app,work,port,bridge_installed=False):
             if server.poll() is None:server.kill();server.wait(timeout=5)
 
 
+def authenticated_http_smoke(app, work, port, dbname):
+    """Actual authenticated HTTP requests on the upgraded disposable candidate.
+    This is route/controller smoke, NOT browser-rendering or functional booking UAT.
+    """
+    user_id=mysql(f"SELECT id FROM `{dbname}`.`sokna_qa_users` WHERE username='qa_admin' LIMIT 1").strip()
+    ck('staging admin user exists for HTTP smoke',user_id.isdigit(),user_id)
+    logfile=work/f'auth-smoke-{port}.log'
+    cookiejar=http.cookiejar.CookieJar()
+    opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookiejar))
+    base=f'http://127.0.0.1:{port}/index.php'
+    with logfile.open('wb') as out:
+        server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(app)],cwd=app,stdout=out,stderr=subprocess.STDOUT)
+        try:
+            html=None
+            for _ in range(40):
+                try:
+                    with opener.open(base+'?page=login',timeout=3) as r:
+                        if r.status==200:html=r.read().decode('utf-8');break
+                except Exception:time.sleep(0.15)
+            ck('upgraded login page renders over HTTP',html is not None and '<form' in html)
+            token=re.search(r'name="csrf" value="([a-f0-9]{64})"',html)
+            ck('upgraded login CSRF field',token is not None)
+            fields={'csrf':token.group(1),'user_id':user_id,'password':'QA-Only-Disposable-Password-2026!','return':'today'}
+            req=urllib.request.Request(base+'?page=login_submit',data=urllib.parse.urlencode(fields).encode(),method='POST')
+            with opener.open(req,timeout=16) as r:
+                body=r.read().decode('utf-8')
+                ck('staging admin login POST reaches authorized page',r.status==200 and 'login-card auth-login-card' not in body)
+            pages=['today','calendar','guests','rooms','reports','settings','updates','backup','health','users','reservation_new']
+            for page in pages:
+                with opener.open(base+'?page='+page,timeout=16) as r:
+                    content=r.read().decode('utf-8')
+                    ck('authenticated HTTP '+page, r.status==200 and '<html' in content.lower(),f'status={r.status}')
+            ck('login actually persisted in DB',mysql(f"SELECT COUNT(*) FROM `{dbname}`.`sokna_qa_users` WHERE id={user_id} AND last_login_at IS NOT NULL").strip()=='1')
+        finally:
+            server.terminate()
+            with contextlib.suppress(subprocess.TimeoutExpired):server.wait(timeout=5)
+            if server.poll() is None:server.kill();server.wait(timeout=5)
+
+
 def scenario(kit,work,old,new,bridge,qa3_updater,name,dbname,port,fail_update=False):
     app=work/name
     unpack(kit/'Sokna-House-2.6.19-dev.24-clean-install.zip',app)
@@ -220,6 +259,7 @@ def scenario(kit,work,old,new,bridge,qa3_updater,name,dbname,port,fail_update=Fa
     ck('bridge-target source safety persists',b'snapshot_isolated' in (app/'app/UpdateManagerV2.php').read_bytes())
     ck('bridge-target financial schema expected',mysql(f"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='{dbname}' AND TABLE_NAME='sokna_qa_financial_commit_keys'").strip()==('0' if fail_update else '1'))
     ck('bridge-target journal records safe admission',json.loads((app/'storage/updates'/op/'journal.json').read_text()).get('snapshot_isolated') is True)
+    if not fail_update: authenticated_http_smoke(app,work,port,dbname)
     return {'name':name,'history':hist,'version':result_version}
 
 
