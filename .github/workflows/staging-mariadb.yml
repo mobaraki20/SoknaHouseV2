@@ -60,6 +60,16 @@ jobs:
         env:
           SOKNA_QA_DISPOSABLE: 'YES'
         run: python3 qa/ci/qa3_financial_e2e_runner.py
+      - name: Install isolated Chromium browser QA dependencies
+        run: |
+          python3 -m venv .qa-browser-venv
+          .qa-browser-venv/bin/python -m pip install --disable-pip-version-check playwright==1.56.0
+          command -v google-chrome
+          google-chrome --version
+      - name: Run actual desktop and mobile browser rendering QA
+        env:
+          SOKNA_QA_DISPOSABLE: 'YES'
+        run: .qa-browser-venv/bin/python qa/ci/qa3_browser_runner.py
       - name: Preserve staging result without DB credentials or data
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,6 +81,9 @@ jobs:
             staging-update-safety-report.json
             staging-offline-bridge-ci-report.json
             staging-qa3-business-ci-report.json
+            staging-qa3-browser-ci-report.json
+            qa3-desktop-calendar.png
+            qa3-mobile-calendar.png
             SOKNAHOUSE_2.6.19-dev.25-qa3-bridge_STAGING_CLEAN_INSTALL.zip
             SOKNAHOUSE_dev24-to-2.6.19-dev.25-qa3-bridge_STAGING_UPDATE_DO_NOT_DEPLOY.zip
             SOKNAHOUSE_QA3_STAGING_PACKAGE_MANIFEST_20261114.json
