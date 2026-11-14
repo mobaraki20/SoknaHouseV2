@@ -35,6 +35,24 @@ def build_bridge_source(old_bootstrap,qa2_bootstrap,guard_source):
     end='\nif(!$s2s){'
     ck('QA2 early gate uniquely located',qa.count(start)==1)
     guard=start+qa.split(start,1)[1].split(end,1)[0]
+    # dev24 deliberately bypasses maintenance for login/update UI routes. During
+    # the isolated bridge stage those routes must also return 503; this is an
+    # application-level second line of defense, NOT the ingress drain proof.
+    bridge_offline = """
+if(PHP_SAPI!=='cli' && is_file($root.'/storage/maintenance.lock')){
+    $offlineJson=json_decode((string)@file_get_contents($root.'/storage/maintenance.lock'),true);
+    if(is_array($offlineJson) && ($offlineJson['state']??'')==='offline_bridge'){
+        http_response_code(503);
+        header('Retry-After: 60');
+        header('Cache-Control: no-store');
+        header('Content-Type: text/plain; charset=utf-8');
+        exit('سامانه برای ارتقای ایمن موقتاً از دسترس خارج است.');
+    }
+}
+"""
+    guard=guard.replace("if(PHP_SAPI!=='cli'){",bridge_offline+"\nif(PHP_SAPI!=='cli'){",1)
+    ck('offline stage intercepts maintenance bypass before sessions',
+       guard.index("$offlineJson=json_decode")<guard.index('RestoreGate::enterRequest($root)'))
     anchor="$s2s=defined('SOKNA_S2S_REQUEST')&&SOKNA_S2S_REQUEST===true;\n"
     ck('bridge pre-session gate location verified',old.count(anchor)==1)
     old=old.replace(anchor,anchor+'\n'+guard+'\n')
@@ -142,19 +160,28 @@ def candidate_update_zip(kit,old,new,qa3_updater,work,fail_files=False):
     return dest,manifest
 
 
-def http_locked(app,work,port):
+def http_locked(app,work,port,bridge_installed=False):
     log=work/f'http-{port}.log'
     with log.open('wb') as output:
         server=subprocess.Popen(['php','-S',f'127.0.0.1:{port}','-t',str(app)],cwd=app,stdout=output,stderr=subprocess.STDOUT)
         try:
-            status=None
-            for _ in range(25):
-                try:
-                    with urllib.request.urlopen(f'http://127.0.0.1:{port}/index.php',timeout=2) as resp:
-                        status=resp.status; break
-                except urllib.error.HTTPError as err:status=err.code;break
-                except Exception:time.sleep(0.2)
-            ck('HTTP entry locked during bridge window',status==503,status)
+            def get_status(route):
+                status=None
+                for _ in range(25):
+                    try:
+                        with urllib.request.urlopen(f'http://127.0.0.1:{port}/{route}',timeout=2) as resp:
+                            return resp.status
+                    except urllib.error.HTTPError as err:return err.code
+                    except Exception:time.sleep(0.2)
+                return status
+            ck('HTTP normal route blocked during offline bridge',get_status('index.php')==503)
+            login=get_status('index.php?page=login')
+            if bridge_installed:
+                ck('bridge intercepts legacy login bypass',login==503,login)
+                updates=get_status('index.php?page=updates')
+                ck('bridge intercepts updater bypass',updates==503,updates)
+            else:
+                ck('legacy login bypass reproduces unsafe exposed route',login!=503 and login is not None,login)
         finally:
             server.terminate()
             with contextlib.suppress(subprocess.TimeoutExpired):server.wait(timeout=5)
@@ -169,10 +196,10 @@ def scenario(kit,work,old,new,bridge,qa3_updater,name,dbname,port,fail_update=Fa
     mysql(f"INSERT INTO `{dbname}`.`sokna_qa_settings` (`key`,`value`) VALUES ('qa_bridge_preserve','PREEXISTING')")
     marker=app/'storage/maintenance.lock'
     # CI simulates ingress isolation. No production host is touched.
-    marker.write_text(json.dumps({'operation':'qa-simulated-offline-bridge','state':'offline_qa_only'}))
-    http_locked(app,work,port+101)
+    marker.write_text(json.dumps({'operation':'qa-simulated-offline-bridge','state':'offline_bridge'}))
+    http_locked(app,work,port+101,bridge_installed=False)
     stage_bridge(app,old,bridge)
-    http_locked(app,work,port+101)
+    http_locked(app,work,port+101,bridge_installed=True)
     ck('bridge after installing still dev24',(app/'VERSION').read_text().strip()=='2.6.19-dev.24')
     ck('bridge schema unchanged before update',mysql(f"SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='{dbname}' AND TABLE_NAME='sokna_qa_financial_commit_keys'").strip()=='0')
     # The upstream ingress is already stopped by the test controller. Remove its
