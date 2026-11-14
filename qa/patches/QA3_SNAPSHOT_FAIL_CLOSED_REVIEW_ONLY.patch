@@ -1,0 +1,62 @@
+--- a/app/UpdateManagerV2.php
++++ b/app/UpdateManagerV2.php
+@@ -84,7 +84,7 @@
+             $journal=[
+                 'format'=>self::JOURNAL_FORMAT,'operation'=>$operation,'from'=>$from,'to'=>$to,'created_at'=>date(DATE_ATOM),'updated_at'=>date(DATE_ATOM),'created_by'=>$userId,
+                 'state'=>'running','phase'=>'files','progress'=>8,'message'=>'پیش‌بررسی و پشتیبان کامل شد.','files'=>$files,'file_index'=>0,'deletes'=>$deletes,'delete_index'=>0,
+-                'database_sha256'=>$databaseHash,'migration_started'=>false,'migration_done'=>false,'rollback_sql_done'=>false,'rollback_file_index'=>null,'database_restored'=>false,'last_error'=>null
++                'database_sha256'=>$databaseHash,'snapshot_isolated'=>true,'migration_started'=>false,'migration_done'=>false,'rollback_sql_done'=>false,'rollback_file_index'=>null,'database_restored'=>false,'last_error'=>null
+             ];
+             self::writeJournal($work,$journal);
+             db()->prepare('INSERT INTO '.table('system_updates').' (operation_id,from_version,to_version,status,message,created_by) VALUES (?,?,?,?,?,?)')->execute([$operation,$from,$to,'running','آماده اجرا',$userId]);$rowInserted=true;
+@@ -112,6 +112,10 @@
+         try{
+             $journal=self::readJournal($operation);
+             if(in_array((string)$journal['state'],['success','rolled_back'],true))return self::publicStatus($journal);
++            // An unisolated dev24 pre-update snapshot may omit committed writes.
++            // Never advance or automatically rewind such a legacy operation.
++            if(($journal['snapshot_isolated']??null)!==true)
++                throw new RuntimeException('Snapshot این عملیات انحصاری و قابل تأیید نیست؛ ادامه یا بازیابی خودکار متوقف شد.');
+             if((string)$journal['state']==='rollback_failed'){$journal['state']='rollback';$journal['message']='در حال تلاش دوباره برای بازیابی';self::writeJournal($work,$journal);}
+             if((string)$journal['state']==='rollback')return self::rollbackStep($journal,$work);
+             try{return self::forwardStep($journal,$work,$userId);}
+@@ -132,6 +136,8 @@
+     {
+         $work=self::workPath($operation);$journal=self::reconcileJournal(self::readJournal($operation));
+         if((string)$journal['state']==='rolled_back')return self::publicStatus($journal);
++        if(($journal['snapshot_isolated']??null)!==true)
++            throw new RuntimeException('Snapshot این عملیات انحصاری نیست؛ بازیابی خودکار برای حفظ اطلاعات متوقف شد.');
+         // Once an update has succeeded and write traffic has resumed, there is
+         // no trustworthy proof that its pre-update DB snapshot is still current.
+         // A checkbox/confirmation cannot make destructive DB rewind safe.
+@@ -183,6 +189,8 @@
+ 
+     private static function journalReadyForSuccess(array $journal): bool
+     {
++        // Do not reconcile legacy unsafe snapshots into success based on VERSION.
++        if(($journal['snapshot_isolated']??null)!==true)return false;
+         if(!in_array((string)($journal['phase']??''),['health','finish','done'],true))return false;
+         $files=(array)($journal['files']??[]);if((int)($journal['file_index']??0)<count($files))return false;
+         $root=dirname(__DIR__);foreach($files as $entry){if(empty($entry['applied']))return false;$rel=(string)($entry['path']??'');$hash=(string)($entry['hash']??'');if($rel===''||$hash===''||!is_file($root.'/'.$rel)||!hash_equals($hash,(string)@hash_file('sha256',$root.'/'.$rel)))return false;}
+@@ -431,10 +439,20 @@
+     /** Fail closed before undoing SQL/files when rollback artifacts have disappeared or changed. */
+     private static function assertRollbackArtifacts(array $journal, string $work): void
+     {
++        // A dev24 journal has neither a drain barrier nor a sealed backup hash.
++        // Continuing with it can erase writes committed after its snapshot.
++        if(($journal['snapshot_isolated']??null)!==true)
++            throw new RuntimeException('Snapshot این عملیات انحصاری و قابل تأیید نیست؛ بازیابی خودکار ممنوع است.');
++        $operation=(string)($journal['operation']??'');
++        $maintenance=json_decode((string)@file_get_contents(dirname(__DIR__).'/storage/maintenance.lock'),true);
++        if(!is_array($maintenance)||($maintenance['operation']??null)!==$operation)
++            throw new RuntimeException('مالکیت حالت نگهداری برای بازیابی تأیید نشد.');
+         $database=$work.'/database.json';
+         if(!is_file($database)||!is_readable($database))throw new RuntimeException('فایل پشتیبان پایگاه داده برای بازیابی موجود نیست.');
+         $databaseHash=(string)($journal['database_sha256']??'');
+-        if($databaseHash!==''&&!hash_equals($databaseHash,(string)@hash_file('sha256',$database)))throw new RuntimeException('صحت پشتیبان پایگاه داده تأیید نشد.');
++        if(!preg_match('/^[a-f0-9]{64}$/i',$databaseHash) ||
++           !hash_equals(strtolower($databaseHash),(string)@hash_file('sha256',$database)))
++            throw new RuntimeException('صحت پشتیبان پایگاه داده تأیید نشد.');
+         if(!empty($journal['migration_started'])&&!is_file($work.'/rollback.sql'))throw new RuntimeException('اسکریپت بازگشت ساختار داده موجود نیست.');
+         foreach(array_merge((array)($journal['files']??[]),(array)($journal['deletes']??[])) as $entry){
+             if(empty($entry['applied'])||empty($entry['existed']))continue;
