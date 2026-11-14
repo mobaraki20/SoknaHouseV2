@@ -1,0 +1,232 @@
+@font-face{
+  font-family:"Vazirmatn";
+  src:url("../font.php?v=33.003") format("woff2");
+  font-style:normal;
+  font-weight:100 900;
+  font-display:block;
+}
+*{box-sizing:border-box}
+html{direction:rtl;background:var(--canvas);font-synthesis:none}
+body.voucher{
+  --voucher-tools-clearance:5.25rem;
+  --voucher-paper:var(--surface);
+  --voucher-paper-soft:var(--surface-soft);
+  margin:0;
+  padding:var(--sp-6) var(--sp-4) calc(var(--voucher-tools-clearance) + var(--sp-5));
+  direction:rtl;
+  text-align:start;
+  color:var(--ink);
+  background:var(--canvas);
+  font-family:var(--font-ui);
+  font-size:var(--font-control);
+  line-height:var(--line-message);
+  font-synthesis:none;
+}
+.voucher :where(h1,h2,p){margin:0}
+.voucher small{font-size:var(--font-caption)}
+.voucher .ui-icon{stroke-width:1.7}
+.voucher main{
+  inline-size:min(100%,148mm);
+  min-block-size:210mm;
+  margin:auto;
+  padding:0 6mm 5mm;
+  display:flex;
+  flex-direction:column;
+  background:var(--voucher-paper);
+  border:1px solid var(--line);
+  box-shadow:none;
+  overflow:hidden;
+}
+.voucher-accent{display:block;flex:0 0 1.4mm;margin-inline:-6mm;margin-block-end:3mm;background:var(--brand)}
+
+/* Exact approved document composition: brand + reference, then one reservation summary surface. */
+.voucher-head{display:grid;grid-template-columns:minmax(0,1fr) 44mm;align-items:center;gap:5mm;padding-block-end:2.2mm;border-block-end:1px solid var(--line-strong,var(--line))}
+.voucher-brand{display:flex;align-items:center;gap:2.8mm;min-inline-size:0}
+.voucher-logo{inline-size:15mm;block-size:15mm;flex:0 0 15mm;object-fit:contain;background:var(--voucher-paper-soft)}
+.voucher-brand>div{display:grid;gap:.25mm;min-inline-size:0}
+.voucher-property{color:var(--brand);font-size:var(--font-sm);font-weight:var(--weight-semibold)}
+.voucher-title-row{display:flex;align-items:center;gap:2mm;min-inline-size:0}
+.voucher h1{font-size:var(--font-heading-lg);line-height:var(--line-tight);font-weight:var(--weight-bold);letter-spacing:-.01em;min-inline-size:0}
+.voucher-status-slot{display:flex;align-items:center;flex:0 0 auto}
+.voucher-brand small{color:var(--ink-faint);font-size:var(--font-2xs);letter-spacing:.08em;direction:ltr;text-align:right}
+.voucher-reference{display:grid;justify-items:start;gap:.4mm;padding-inline-end:4mm;border-inline-end:1px solid var(--line);text-align:start}
+.voucher-reference span{color:var(--ink-soft);font-size:var(--font-2xs)}
+.voucher-reference strong{font-size:var(--font-md);line-height:var(--line-tight);font-weight:var(--weight-semibold);letter-spacing:.02em;unicode-bidi:isolate}
+.voucher-reference small{color:var(--ink-soft);font-size:var(--font-2xs)}
+.voucher-state-chip{display:inline-flex;align-items:center;justify-content:center;min-block-size:5.6mm;max-inline-size:100%;padding:.35mm 2mm;border:1px solid var(--success-border,var(--brand-border-soft));border-radius:var(--pill);background:var(--success-soft,var(--brand-soft));color:var(--success-strong,var(--brand));font-size:var(--font-2xs);font-style:normal;font-weight:var(--weight-semibold);line-height:var(--line-tight);white-space:nowrap;overflow:visible}
+.voucher-state-chip.warning{border-color:var(--warning-border);background:var(--warning-soft);color:var(--warning-strong)}
+.voucher-state-chip.danger{border-color:var(--danger-border);background:var(--danger-soft);color:var(--danger-strong)}
+
+.voucher-summary{display:grid;grid-template-columns:48mm minmax(0,1fr);margin-block-start:2.2mm;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;break-inside:avoid;background:var(--voucher-paper)}
+.voucher-identity{display:grid;align-content:stretch;border-inline-end:1px solid var(--line)}
+.voucher-identity>div{display:grid;gap:.5mm;align-content:center;padding:1.65mm 3mm;min-inline-size:0}
+.voucher-identity>div+div{border-block-start:1px solid var(--line)}
+.voucher-identity span{color:var(--ink-soft);font-size:var(--font-xs)}
+.voucher-identity strong{font-size:var(--font-md);font-weight:var(--weight-bold);min-inline-size:0;overflow-wrap:anywhere}
+.voucher-stay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.voucher-stay-fact{display:grid;place-items:center;align-content:center;gap:.6mm;padding:1.65mm 1.2mm;text-align:center;min-inline-size:0}
+.voucher-stay-fact+ .voucher-stay-fact{border-inline-start:1px solid var(--line)}
+.voucher-stay-fact>span{display:grid;place-items:center;color:var(--brand)}
+.voucher-stay-fact .ui-icon{inline-size:1.1rem;block-size:1.1rem}
+.voucher-stay-fact small{color:var(--ink-soft);font-size:var(--font-xs)}
+.voucher-stay-fact strong{font-size:var(--font-sm);font-weight:var(--weight-semibold);white-space:nowrap}
+.voucher-stay-fact em{color:var(--ink-faint);font-size:var(--font-2xs);font-style:normal}
+
+.voucher-section,.voucher-finance-wrap,.voucher-note,.voucher-policy{margin-block-start:2.6mm;break-inside:avoid}
+.voucher-section-title{display:flex;align-items:center;justify-content:space-between;gap:4mm;margin-block-end:1.2mm}
+.voucher-section-title h2,.voucher-policy h2{display:flex;align-items:center;gap:1.4mm;font-size:var(--font-md);line-height:var(--line-tight);font-weight:var(--weight-semibold)}
+.voucher-section-title h2::before,.voucher-policy h2::before{content:"";inline-size:.9mm;block-size:5mm;border-radius:var(--pill);background:var(--brand)}
+.voucher-note .voucher-section-title h2::before{display:none}
+.voucher-section-title .ui-icon,.voucher-policy h2 .ui-icon{inline-size:1rem;block-size:1rem;color:var(--brand)}
+.voucher-section-title>span{color:var(--ink-faint);font-size:var(--font-2xs)}
+
+.voucher-table-wrap{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.voucher-table{inline-size:100%;border-collapse:collapse;table-layout:fixed;font-size:var(--font-xs)}
+.voucher-table :where(th,td){padding:1.25mm 1.25mm;text-align:center;vertical-align:middle;border-block-end:1px solid var(--line);border-inline-start:1px solid var(--line)}
+.voucher-table :where(th,td):first-child{border-inline-start:0}
+.voucher-table tr:last-child td{border-block-end:0}
+.voucher-table th{color:var(--ink-soft);font-size:var(--font-2xs);font-weight:var(--weight-medium);background:var(--voucher-paper-soft)}
+.voucher-table td{font-size:var(--font-xs)}
+.voucher-table td b{font-weight:var(--weight-semibold)}
+.voucher-table .row-index{inline-size:7%}.voucher-table .room-cell{inline-size:20%}.voucher-table .date-cell{inline-size:16%;white-space:nowrap}.voucher-table .nights-cell{inline-size:11%;white-space:nowrap}.voucher-table .guest-cell{inline-size:13%;white-space:nowrap}.voucher-table .money-cell,.voucher-table .money-head{text-align:center;white-space:nowrap}
+.voucher-table .money-cell{font-weight:var(--weight-semibold)}
+.voucher-table.compact{table-layout:auto}
+.voucher-table.compact td:first-child{text-align:start}
+.voucher-table.compact td:last-child{text-align:end;white-space:nowrap}
+.voucher-table.compact td small{display:block;color:var(--ink-faint);font-size:var(--font-2xs);font-weight:var(--weight-regular)}
+
+/* White financial block for low-ink printing. Hierarchy comes from type and separators, not fills. */
+.voucher-finance{display:grid;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--voucher-paper)}
+.voucher-finance>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4mm;padding:1.2mm 3mm}
+.voucher-finance>div+div{border-block-start:1px solid var(--line)}
+.voucher-finance span{color:var(--ink-soft);font-size:var(--font-xs)}
+.voucher-finance b{font-size:var(--font-sm);font-weight:var(--weight-medium);white-space:nowrap}
+.voucher-finance b small{font-size:var(--font-2xs);font-weight:var(--weight-regular)}
+.voucher-finance .discount b{color:var(--brand);font-weight:var(--weight-semibold)}
+.voucher-finance .final-total{margin-block-start:.25mm;border-block-start:1.4px solid var(--line-strong,var(--ink-soft))}
+.voucher-finance .final-total span,.voucher-finance .balance span{color:var(--ink);font-weight:var(--weight-semibold)}
+.voucher-finance .final-total b,.voucher-finance .balance b{font-size:var(--font-md);font-weight:var(--weight-bold)}
+.voucher-finance .balance.due b{color:var(--warning-strong)}
+.voucher-finance .balance.credit b{color:var(--success-strong)}
+
+.voucher-note{padding-block:1.5mm;border-block:1px dashed var(--line)}
+.voucher-note .voucher-section-title{margin-block-end:1.2mm}
+.voucher-note p{color:var(--ink-soft);font-size:var(--font-xs);line-height:var(--line-message)}
+.voucher-policy{padding-block:1.5mm;border-block-end:1px dashed var(--line)}
+.voucher-policy h2{margin-block-end:1mm}
+.voucher-policy p{color:var(--ink-soft);font-size:var(--font-xs);line-height:var(--line-message)}
+.voucher-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:4mm;margin-block-start:2mm;padding-block-start:1.5mm;border-block-start:1px dashed var(--line);color:var(--ink-soft);break-inside:avoid}
+.voucher-foot>div{display:grid;gap:.8mm;min-inline-size:0}
+.voucher-foot>div>b{display:flex;align-items:center;gap:1.2mm;color:var(--ink);font-size:var(--font-sm);font-weight:var(--weight-semibold)}
+.voucher-foot>div>b .ui-icon{inline-size:1rem;block-size:1rem;color:var(--brand)}
+.voucher-foot>div>small{color:var(--ink-faint);font-size:var(--font-2xs)}
+.voucher-contact{display:flex;flex-wrap:wrap;gap:.3mm 3mm;font-size:var(--font-xs)}
+.voucher-contact span:first-child{flex-basis:100%}
+.voucher-stamp{inline-size:20mm;block-size:20mm;object-fit:contain;opacity:.94;flex:0 0 auto}
+
+.print-tools{position:fixed;z-index:var(--z-sticky);inset-inline:1rem;inset-block-end:max(.75rem,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-1-5);max-inline-size:37rem;margin-inline:auto;padding:var(--sp-2);border:1px solid var(--line);background:var(--surface-glass-strong);box-shadow:var(--shadow-md);backdrop-filter:blur(10px);border-radius:var(--r-lg)}
+.print-tools :where(a,button){display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-1-5);min-block-size:2.75rem;padding:var(--sp-2) var(--sp-3);border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font:inherit;font-size:var(--font-md);text-decoration:none;cursor:pointer;white-space:nowrap}.print-tools .primary-tool{background:var(--brand);border-color:var(--brand);color:var(--white)}.print-tools .ui-icon{inline-size:1.15rem;block-size:1.15rem}.print-tools :where(a,button):focus-visible,.voucher-more-popover a:focus-visible{outline:2px solid var(--brand);outline-offset:2px}.print-tools [data-voucher-more-trigger][aria-expanded="true"]{border-color:var(--brand-border-soft);background:var(--brand-soft);color:var(--brand)}
+.voucher-more-popover{position:fixed;z-index:calc(var(--z-sticky) + 2);inset:auto;inline-size:min(19rem,calc(100vw - 1rem));max-block-size:min(24rem,calc(100vh - 1rem));margin:0;padding:var(--sp-1-5);overflow:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-lg);color:var(--ink);overscroll-behavior:contain}
+.voucher-more-popover::backdrop{background:transparent}.voucher-more-popover a{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:var(--sp-2-5);min-block-size:3.4rem;padding:var(--sp-2-5) var(--sp-3);border-radius:var(--r-md);color:var(--ink);text-decoration:none}.voucher-more-popover a+a{border-block-start:1px solid var(--line)}.voucher-more-popover a:hover,.voucher-more-popover a:focus-visible{background:var(--surface-soft)}.voucher-more-popover .ui-icon{inline-size:1.2rem;block-size:1.2rem;color:var(--brand)}.voucher-more-popover span{display:grid;gap:var(--sp-0-5);min-inline-size:0}.voucher-more-popover b{font-size:var(--font-sm)}.voucher-more-popover small{color:var(--ink-soft);font-size:var(--font-xs);line-height:var(--line-control)}
+.voucher-export-status{position:fixed;z-index:calc(var(--z-sticky) + 3);inset-inline:1rem;inset-block-end:calc(var(--voucher-tools-clearance) + 1rem);max-inline-size:34rem;margin:auto;padding:var(--sp-2) var(--sp-3);border:1px solid var(--line);border-radius:var(--r-md);background:var(--ink);color:var(--white);box-shadow:var(--shadow-md);font-size:var(--font-xs);text-align:center;opacity:0;transform:translateY(4px);pointer-events:none;transition:.18s}.voucher-export-status.show{opacity:1;transform:none}
+
+/* 80mm uses the same data hierarchy but a thermal composition. */
+body.voucher-receipt{padding:var(--sp-3) var(--sp-2) calc(var(--voucher-tools-clearance) + var(--sp-3));background:var(--canvas)}
+.voucher-receipt main{inline-size:min(100%,80mm);min-block-size:0;padding:0 2.6mm 2.6mm}
+.voucher-receipt .voucher-accent{flex-basis:.8mm;margin-inline:-2.6mm;margin-block-end:1.6mm}
+.voucher-receipt .voucher-head{grid-template-columns:minmax(0,1fr) 27mm;gap:1.6mm;padding-block-end:1.6mm}.voucher-receipt .voucher-brand{gap:1.3mm}.voucher-receipt .voucher-logo{inline-size:9mm;block-size:9mm;flex-basis:9mm}.voucher-receipt .voucher-property{font-size:var(--font-2xs)}.voucher-receipt h1{font-size:var(--font-caption)}.voucher-receipt .voucher-brand small{display:none}.voucher-receipt .voucher-reference{gap:.1mm;padding-inline-end:1.5mm}.voucher-receipt .voucher-reference :where(span,strong,small){font-size:var(--font-2xs)}.voucher-receipt .voucher-state-chip{min-block-size:0;padding:.2mm .8mm;font-size:var(--font-2xs)}
+.voucher-receipt .voucher-summary{display:block;margin-block-start:1.2mm;border:0;border-radius:0;}.voucher-receipt .voucher-identity{grid-template-columns:1.25fr 1fr;border-block:1px dashed var(--line);border-inline-end:0}.voucher-receipt .voucher-identity>div{padding:.8mm 0}.voucher-receipt .voucher-identity>div+div{border-block-start:0;border-inline-start:1px dashed var(--line);padding-inline-start:1mm}.voucher-receipt .voucher-identity :where(span,strong){font-size:var(--font-2xs)}
+.voucher-receipt .voucher-stay{border-block-end:1px dashed var(--line)}.voucher-receipt .voucher-stay-fact{gap:.1mm;padding:.7mm .5mm}.voucher-receipt .voucher-stay-fact>span{display:none}.voucher-receipt .voucher-stay-fact :where(small,strong,em){font-size:var(--font-2xs)}
+.voucher-receipt :is(.voucher-section,.voucher-finance-wrap,.voucher-note,.voucher-policy){margin-block-start:1.4mm}.voucher-receipt .voucher-section-title{margin-block-end:.4mm}.voucher-receipt .voucher-section-title h2,.voucher-receipt .voucher-policy h2{font-size:var(--font-2xs)}.voucher-receipt .voucher-section-title h2::before,.voucher-receipt .voucher-policy h2::before{inline-size:.55mm;block-size:3mm}
+.voucher-receipt .voucher-table-wrap{border-inline:0;border-radius:0;}.voucher-receipt .voucher-table thead{display:none}.voucher-receipt .voucher-table tbody,.voucher-receipt .voucher-table tr,.voucher-receipt .voucher-table td{display:block;inline-size:100%}.voucher-receipt .voucher-table tr{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2mm 1mm;padding:.8mm 0;border-block-end:1px dashed var(--line)}.voucher-receipt .voucher-table td{padding:0;border:0;font-size:var(--font-2xs)}.voucher-receipt .voucher-table .row-index{display:none}.voucher-receipt .voucher-table .room-cell{grid-column:1;grid-row:1;text-align:start}.voucher-receipt .voucher-table .money-cell{grid-column:2;grid-row:1;text-align:end}.voucher-receipt .voucher-table .date-cell{grid-column:1/-1;text-align:start;white-space:normal}.voucher-receipt .voucher-table .date-cell:nth-of-type(3)::before{content:"ورود: "}.voucher-receipt .voucher-table .date-cell:nth-of-type(4)::before{content:"خروج: "}.voucher-receipt .voucher-table .nights-cell,.voucher-receipt .voucher-table .guest-cell{display:inline;grid-column:1/-1;text-align:start}.voucher-receipt .voucher-table.compact tr{grid-template-columns:minmax(0,1fr) auto}.voucher-receipt .voucher-table.compact td:first-child{grid-column:1;grid-row:1}.voucher-receipt .voucher-table.compact .money-cell{grid-column:2;grid-row:1}
+.voucher-receipt .voucher-finance{border-inline:0;border-radius:0;}.voucher-receipt .voucher-finance>div{padding:.6mm 0}.voucher-receipt .voucher-finance span,.voucher-receipt .voucher-finance b,.voucher-receipt .voucher-finance b small{font-size:var(--font-2xs)}.voucher-receipt .voucher-finance .final-total b,.voucher-receipt .voucher-finance .balance b{font-size:var(--font-xs)}
+.voucher-receipt .voucher-note,.voucher-receipt .voucher-policy{padding-block:.8mm}.voucher-receipt .voucher-note p,.voucher-receipt .voucher-policy p{font-size:var(--font-2xs)}
+.voucher-receipt .voucher-foot{display:grid;justify-items:start;gap:.6mm;margin-block-start:1mm;padding-block-start:.8mm}.voucher-receipt .voucher-foot>div>b,.voucher-receipt .voucher-contact,.voucher-receipt .voucher-foot>div>small{font-size:var(--font-2xs)}.voucher-receipt .voucher-stamp{inline-size:12mm;block-size:12mm;justify-self:end}
+
+@media(max-width:620px){
+  body.voucher{padding:var(--sp-3) var(--sp-2) calc(var(--voucher-tools-clearance) + var(--sp-3))}
+  .voucher main{min-block-size:0;padding-inline:4mm}.voucher-accent{margin-inline:-4mm}
+  .voucher-head{grid-template-columns:minmax(0,1fr) 39%;gap:2.5mm}.voucher-logo{inline-size:11mm;block-size:11mm;flex-basis:11mm}.voucher h1{font-size:var(--font-lg)}.voucher-reference{padding-inline-end:2mm}.voucher-reference strong{font-size:var(--font-caption)}
+  .voucher-summary{grid-template-columns:1fr}.voucher-identity{grid-template-columns:1.2fr 1fr;border-inline-end:0;border-block-end:1px solid var(--line)}.voucher-identity>div+div{border-block-start:0;border-inline-start:1px solid var(--line)}
+  .voucher-table{font-size:var(--font-2xs)}.voucher-table :where(th,td){padding-inline:.7mm}.voucher-table .row-index{display:none}.voucher-table th.row-index{display:none}
+  .print-tools{inset-inline:.5rem}.print-tools :where(a,button){padding-inline:var(--sp-1);font-size:var(--font-caption)}.print-tools .ui-icon{inline-size:1rem;block-size:1rem}.voucher-export-status{inset-inline:.6rem}
+  .voucher-receipt main{padding-inline:2.6mm}.voucher-receipt .voucher-accent{margin-inline:-2.6mm}
+}
+@media(max-width:390px){.voucher-brand small{display:none}.voucher-logo{inline-size:10mm;block-size:10mm;flex-basis:10mm}.voucher h1{font-size:var(--font-md)}.print-tools :where(a,button){gap:var(--sp-1)}.print-tools .ui-icon{display:none}}
+
+/* Screen follows the application theme. Export/print intentionally use a fixed light document palette. */
+.voucher-export-source{position:fixed;pointer-events:none}
+.voucher-export-light{
+  color-scheme:light;
+  color:var(--ink);
+  background:#fff;
+  --canvas:#fff;--surface:#fff;--surface-soft:#f6f2ef;--surface-strong:#ede5df;
+  --white:#fff;--ink:#2d2824;--ink-soft:#6d625b;--ink-faint:#91857d;
+  --brand:#846554;--brand-2:#755545;--brand-strong:#684b3d;--brand-soft:#f0e7e2;
+  --brand-border:#846554;--brand-border-soft:#ddcbc1;--line:#e1d8d1;--line-strong:#cdbfb6;
+  --success:#3f7250;--success-strong:#31563b;--success-soft:#e8f2ea;--success-border:#bed8c4;
+  --warning:#89631c;--warning-strong:#735218;--warning-soft:#fff3d7;--warning-border:#e5d19c;
+  --danger:#a4473f;--danger-strong:#843b35;--danger-soft:#fae7e4;--danger-border:#dfb8b3;
+  --voucher-paper:#fff;--voucher-paper-soft:#f6f2ef;
+}
+
+@media print{
+  html,body.voucher{background:#fff!important;color-scheme:light}
+  body.voucher{
+    --canvas:#fff;--surface:#fff;--surface-soft:#f6f2ef;--surface-strong:#ede5df;--white:#fff;
+    --ink:#2d2824;--ink-soft:#6d625b;--ink-faint:#91857d;--brand:#846554;--brand-2:#755545;--brand-strong:#684b3d;
+    --brand-soft:#f0e7e2;--brand-border:#846554;--brand-border-soft:#ddcbc1;--line:#e1d8d1;--line-strong:#cdbfb6;
+    --success:#3f7250;--success-strong:#31563b;--success-soft:#e8f2ea;--success-border:#bed8c4;
+    --warning:#89631c;--warning-strong:#735218;--warning-soft:#fff3d7;--warning-border:#e5d19c;
+    --danger:#a4473f;--danger-strong:#843b35;--danger-soft:#fae7e4;--danger-border:#dfb8b3;
+    --voucher-paper:#fff;--voucher-paper-soft:#f6f2ef;
+    padding:0;color:var(--ink);-webkit-print-color-adjust:economy;print-color-adjust:economy;
+  }
+  .voucher-accent,.voucher-state-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .voucher-a5 main{inline-size:148mm;min-block-size:209.5mm;margin:0;box-shadow:none;page:a5}
+  .voucher-receipt main{inline-size:80mm;min-block-size:0;margin:0;page:receipt}
+  .print-tools,.voucher-more-popover,.voucher-export-status{display:none}
+  a{color:inherit;text-decoration:none}
+}
+@page a5{size:A5 portrait;margin:0}
+@page receipt{margin:0}
+
+
+/* Dedicated 80mm thermal receipt layout (dev21). */
+body.voucher-receipt{padding:var(--sp-3) var(--sp-2) calc(var(--voucher-tools-clearance) + var(--sp-3));background:var(--canvas)}
+.voucher-receipt main{inline-size:min(100%,72mm);min-block-size:0;margin:auto;padding:0;background:var(--voucher-paper);border:0;box-shadow:none;overflow:visible}
+.receipt-sheet{display:grid;gap:1.5mm;padding:2.2mm 0 3mm;color:var(--ink);font-size:var(--font-2xs);line-height:1.55}
+.receipt-header{display:grid;justify-items:center;gap:1mm;padding-block-end:1.2mm;border-block-end:1px dashed var(--line-strong,var(--line));text-align:center}
+.receipt-logo{inline-size:11mm;block-size:11mm;object-fit:contain}
+.receipt-brand-copy{display:grid;justify-items:center;gap:.35mm}
+.receipt-property{color:var(--brand);font-size:var(--font-xs);font-weight:var(--weight-bold)}
+.receipt-header h1{margin:0;font-size:var(--font-sm);line-height:1.25;font-weight:var(--weight-bold)}
+.receipt-status{display:inline-flex;align-items:center;justify-content:center;padding:.25mm 1.6mm;border:1px solid var(--line);border-radius:999px;background:var(--voucher-paper-soft);font-size:var(--font-2xs);font-weight:var(--weight-semibold)}
+.receipt-status.warning{border-color:var(--warning-border);background:var(--warning-soft);color:var(--warning-strong)}
+.receipt-status.danger{border-color:var(--danger-border);background:var(--danger-soft);color:var(--danger-strong)}
+.receipt-status.success{border-color:var(--success-border);background:var(--success-soft);color:var(--success-strong)}
+.receipt-block,.receipt-note,.receipt-footer{display:grid;gap:.85mm;padding-block-end:1.4mm;border-block-end:1px dashed var(--line)}
+.receipt-block-title{font-size:var(--font-xs);font-weight:var(--weight-bold);color:var(--ink)}
+.receipt-meta-grid{grid-template-columns:1fr 1fr;gap:1mm 2mm}
+.receipt-pair,.receipt-line,.receipt-item-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2mm;align-items:start}
+.receipt-pair span,.receipt-line span,.receipt-item-meta span{color:var(--ink-soft)}
+.receipt-pair b,.receipt-line b,.receipt-item-meta b{font-weight:var(--weight-semibold);text-align:end}
+.receipt-items{gap:1mm}
+.receipt-item{display:grid;gap:.55mm;padding-block-end:1mm;border-block-end:1px dashed var(--line)}
+.receipt-item:last-child{padding-block-end:0;border-block-end:0}
+.receipt-item-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2mm;align-items:start}
+.receipt-item-head b{font-size:var(--font-xs);font-weight:var(--weight-semibold)}
+.receipt-item-head span{font-weight:var(--weight-semibold);white-space:nowrap}
+.receipt-finance .receipt-line.total{padding-block-start:.7mm;margin-block-start:.2mm;border-block-start:1px solid var(--line-strong,var(--line))}
+.receipt-finance .receipt-line.total span,.receipt-finance .receipt-line.balance span{color:var(--ink);font-weight:var(--weight-semibold)}
+.receipt-finance .receipt-line.total b,.receipt-finance .receipt-line.balance b{font-size:var(--font-xs);font-weight:var(--weight-bold)}
+.receipt-finance .receipt-line.balance.due b{color:var(--warning-strong)}
+.receipt-finance .receipt-line.balance.credit b{color:var(--success-strong)}
+.receipt-note p{margin:0;color:var(--ink-soft)}
+.receipt-footer{border-block-end:0;padding-block-end:0;justify-items:center;text-align:center;color:var(--ink-soft)}
+.receipt-footer>div{max-inline-size:100%;overflow-wrap:anywhere}
+.receipt-footer small{color:var(--ink-faint);line-height:1.5}
+@media print{
+  .voucher-receipt main{inline-size:72mm;min-block-size:0;margin:0 auto;page:receipt}
+}
+@page receipt{size:80mm auto;margin:0}

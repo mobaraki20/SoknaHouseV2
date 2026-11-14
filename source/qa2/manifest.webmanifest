@@ -1,0 +1,56 @@
+{
+  "id": "./index.php?page=today",
+  "name": "خانه سکنا | مدیریت اقامتگاه",
+  "short_name": "خانه سکنا",
+  "description": "سامانه داخلی مدیریت اقامتگاه خانه سکنا",
+  "lang": "fa-IR",
+  "dir": "rtl",
+  "start_url": "./index.php?page=today",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f1ed",
+  "theme_color": "#846554",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "امروز",
+      "short_name": "امروز",
+      "url": "./index.php?page=today"
+    },
+    {
+      "name": "تقویم و رزروها",
+      "short_name": "تقویم",
+      "url": "./index.php?page=calendar"
+    },
+    {
+      "name": "رزرو جدید",
+      "short_name": "رزرو",
+      "url": "./index.php?page=reservation_new"
+    }
+  ]
+}

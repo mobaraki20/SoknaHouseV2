@@ -1,0 +1,74 @@
+{
+  "api_version": "2.1",
+  "currency": "TOMAN",
+  "capabilities_response": {
+    "ok": true,
+    "api_version": "2.1",
+    "capabilities": {
+      "unified_search": true,
+      "invoice_snapshot": true,
+      "invoice_snapshot_versions": [1, 2, 3],
+      "charge_request_metadata": true,
+      "search_phone_hint": true,
+      "idempotent_charge": true,
+      "charge_void": true
+    }
+  },
+  "search_response": {
+    "ok": true,
+    "reservations": [{
+      "reservation_code": "SK-1405-00124",
+      "guest_name": "علی رضایی",
+      "room_names": ["نخلستان"],
+      "masked_mobile": "0912***1234",
+      "phone_hint": "0912***1234",
+      "charge_allowed": true,
+      "charge_block_reason": null
+    }]
+  },
+  "charge_v2_request_shape": {
+    "external_order_id": "CAFE-S-142",
+    "reservation_code": "SK-1405-00124",
+    "amount": 920000,
+    "currency": "TOMAN",
+    "invoice": {
+      "version": 2,
+      "number": "I-142",
+      "issued_at": "2026-10-07T18:40:00+03:30",
+      "table_name": "میز ۱۲",
+      "account_subtotal": 970000,
+      "account_discount": 50000,
+      "account_total": 920000,
+      "paid_before": 0,
+      "subtotal": 970000,
+      "discount": 50000,
+      "total": 920000,
+      "complimentary": false,
+      "remaining_after": 0,
+      "items": [{
+        "order_item_id": 31,
+        "name": "آیس لاته",
+        "quantity": 2,
+        "unit_price": 210000,
+        "line_total": 420000,
+        "line_discount": 20000,
+        "line_net": 400000,
+        "note": null
+      }]
+    },
+    "payload_hash": "<64-hex>",
+    "requested_at": "2026-10-07T18:40:05+03:30"
+  },
+  "charge_response": {
+    "ok": true,
+    "status": "posted",
+    "transaction_id": "ACC-TRX-EXAMPLE",
+    "external_order_id": "CAFE-S-142",
+    "idempotent": false
+  },
+  "void_request": {
+    "external_order_id": "CAFE-S-142",
+    "reason": "ابطال تسویه توسط مدیر",
+    "requested_at": "2026-10-07T19:10:00+03:30"
+  }
+}
