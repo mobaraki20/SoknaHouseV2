@@ -181,6 +181,51 @@ def qa2_post_success(kit,work):
     check('successful update not reversed',(app/'VERSION').read_text().strip()=='2.6.19-dev.25-qa3-ci')
 
 
+def qa2_crash_during_file_replace(kit, work):
+    """Genuine SIGKILL after verified file replacement and before journal commit.
+    The pause hook is test-only and is applied to a disposable extracted fixture.
+    """
+    db='sokna_qa_crash_resume'; app=work/'qa2-crash-resume'
+    unpack(kit/'SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip',app)
+    harden_qa2_fixture(app)
+    mysql(f'CREATE DATABASE `{db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'); install(app,db,8806)
+    pkg=work/'qa2-crash-update.zip'; make_qa2_update(pkg)
+    source=app/'app/UpdateManagerV2.php'; php=source.read_text()
+    needle="if(!is_file($dst)||!hash_equals($expected,(string)@hash_file('sha256',$dst)))throw new RuntimeException('صحت فایل جایگزین‌شده «'.$rel.'» تأیید نشد.');"
+    check('fixture-only crash hook at exact post-replace boundary',php.count(needle)==1)
+    hook=(needle+'''
+        // QA ONLY: parent sends SIGKILL before the journal advances.
+        if(getenv('SOKNA_QA_PAUSE_AFTER_REPLACE')==='1' && $rel==='VERSION') {
+            file_put_contents(dirname(__DIR__).'/storage/qa-replace-paused', 'after-byte-verified');
+            while(true)usleep(10000);
+        }''')
+    source.write_text(php.replace(needle,hook))
+    check('crash-instrumented PHP syntax',subprocess.run(['php','-l',str(source)],capture_output=True).returncode==0)
+    op=begin(app,pkg,gate=True)
+    command=['php','-r','define("SOKNA_S2S_REQUEST",true);require "app/bootstrap.php";UpdateManagerV2::continue($argv[1],1);',op]
+    env=os.environ.copy();env['SOKNA_QA_PAUSE_AFTER_REPLACE']='1'
+    proc=subprocess.Popen(command,cwd=app,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+    marker=app/'storage/qa-replace-paused'
+    try:
+        for _ in range(220):
+            if marker.exists():break
+            if proc.poll() is not None:raise RuntimeError('file worker returned early: '+proc.stderr.read()[-400:])
+            time.sleep(0.035)
+        check('pause reached after replacement but before journal commit',marker.exists())
+        proc.kill();proc.communicate(timeout=8)
+        check('worker terminated by SIGKILL',proc.returncode==-9,proc.returncode)
+        check('target VERSION written before kill',(app/'VERSION').read_text().strip()=='2.6.19-dev.25-qa3-ci')
+        journal=json.loads((app/'storage/updates'/op/'journal.json').read_text())
+        check('journal remained before file commit',journal['phase']=='files' and journal['file_index']==0 and not journal['files'][0]['applied'])
+        status=json.loads(phpcall(app,'echo json_encode(UpdateManagerV2::status($argv[1]));',op))
+        check('reconciliation refuses false success after crash',status['state']=='running')
+        advance(app,op,'success')
+        check('interrupted update converges after fresh process restart',not (app/'storage/maintenance.lock').exists())
+        check('resumed update retains data',db_setting(db,'property_name')!='')
+    finally:
+        if proc.poll() is None:proc.kill();proc.wait(timeout=5)
+
+
 def qa2_unsealed_journal(kit,work):
     db='sokna_qa_no_proof';app=work/'qa2-no-proof'
     unpack(kit/'SOKNAHOUSE_2.6.19-dev.25-qa2_STAGING_CLEAN_INSTALL.zip',app)
@@ -217,6 +262,7 @@ def main():
         qa2_tamper(kit,work)
         qa2_post_success(kit,work)
         qa2_unsealed_journal(kit,work)
+        qa2_crash_during_file_replace(kit,work)
         check('dev24 initial upgrade still BLOCKED',True,'legacy updater must be retired via a separately qualified safe entry path')
 
 if __name__=='__main__':
