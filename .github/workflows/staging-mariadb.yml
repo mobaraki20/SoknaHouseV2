@@ -50,6 +50,10 @@ jobs:
         run: python3 qa/ci/update_staging_runner.py
       - name: Reproduce legacy snapshot gap and verify QA2 isolation/recovery on disposable MariaDB
         run: python3 qa/ci/update_safety_runner.py
+      - name: Rehearse offline-first guard bridge before dev24 upgrade (disposable only)
+        env:
+          SOKNA_QA_DISPOSABLE: 'YES'
+        run: python3 qa/ci/dev24_offline_bridge_runner.py
       - name: Preserve staging result without DB credentials or data
         if: always()
         uses: actions/upload-artifact@v4
@@ -59,5 +63,6 @@ jobs:
             staging-ci-report.json
             staging-update-ci-report.json
             staging-update-safety-report.json
+            staging-offline-bridge-ci-report.json
           if-no-files-found: warn
           retention-days: 14
